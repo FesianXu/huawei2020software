@@ -11,6 +11,7 @@
         "memory": "cpp",
         "xlocale": "cpp",
         "xlocnum": "cpp",
-        "xmemory": "cpp"
+        "xmemory": "cpp",
+        "ostream": "cpp"
     }
 }

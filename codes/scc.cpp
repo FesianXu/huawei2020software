@@ -30,8 +30,10 @@ class Graph
     list<int> *adj;    // An array of adjacency lists 
     vector<vector<int>> scc; // store the strong-connected component
     vector<Record> *records;
+    unordered_map<uint32_t, uint32_t> word_book; // {original_code, idx}
+    unordered_map<uint32_t,uint32_t> codebook; // {idx, original_code}
+
     int number_scc;
-    
     // Fills Stack with vertices (in increasing order of finishing 
     // times). The top element of stack has the maximum finishing  
     // time 
@@ -52,9 +54,28 @@ public:
   
     // Function that returns reverse (or transpose) of this graph 
     Graph getTranspose(); 
-
     void printSCCs();
+
+    const vector<vector<int>> *get_adjList(int rmin, int rmax, 
+                                           unordered_map<int,int> &codebook);
 }; 
+
+const vector<vector<int>> *Graph::get_adjList(int rmin, int rmax, 
+                                              unordered_map<int,int> &codebook) {
+    // rmin <= r <= rmax
+    vector<vector<int>> *adjlist = new vector<vector<int>>;
+    int size = scc.size();
+    for (int i = 0; i < size; ++i) {
+        vector<int> curr = scc[i];
+        int num = curr.size();
+        if (num > rmax || num < rmin) continue;
+        for (int j = 0; j < num; ++j) {
+
+        }
+
+    }
+    return adjlist;
+}
   
 Graph::Graph(int V) 
 { 
@@ -98,7 +119,6 @@ Graph::Graph(string data_path) {
     read_ifs.close();
 
     unordered_set<uint32_t> all_ids;
-    unordered_map<uint32_t, uint32_t> word_book; // {original_code, idx}
     for (int i = 0; i < number_records; ++i) {
         all_ids.insert((*records)[i].source_id);
         all_ids.insert((*records)[i].target_id);
@@ -109,12 +129,10 @@ Graph::Graph(string data_path) {
             word_book[*iter] = idx++;
     }
 
-    unordered_map<uint32_t,uint32_t> codebook; // {idx, original_code}
     for (auto iter = word_book.begin(); iter != word_book.end(); ++iter) {
         codebook[iter->second] = iter->first;
     }
     // codebook and wordbook
-    
     this->V = codebook.size();
     adj = new list<int>[this->V]; 
     for (Record &rec:*records) {
@@ -217,15 +235,19 @@ void Graph::get_SCCs()
 } 
 
 void Graph::printSCCs() {
+    int count = 0;
     for (int i = 0; i < number_scc; ++i) {
         vector<int> curr = scc[i];
         int size = curr.size();
+        if (size <= 2) continue;
+        count++;
         cout << "begin :" ;
         for (int j = 0; j < size; ++j)
             cout << curr[j] << " " ;
         cout << endl;
     }
     cout << "size of the scc = " << number_scc << endl;
+    cout << "larger than 2 counter：" << count << endl;
 }
 
 // // Driver program to test above functions 
