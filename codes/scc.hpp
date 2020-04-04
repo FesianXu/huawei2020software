@@ -1,3 +1,6 @@
+#ifndef SCC_HPP
+#define SCC_HPP
+
 // C++ Implementation of Kosaraju's algorithm to print all SCCs 
 #include <iostream> 
 #include <list> 
@@ -9,6 +12,7 @@
 #include <algorithm>
 #include <fstream>
 #include "./johnsons_circle.hpp"
+#include <chrono>
 using namespace std; 
 
 extern int get_simple_cycle(vector<vector<int>> *adjList);
@@ -145,6 +149,7 @@ Graph::Graph(string data_path) {
     read_ifs.seekg(0, ios::beg);
     int cell = 0;
     uint32_t  count = 0;
+    auto start = std::chrono::steady_clock::now();
     while ((read_ifs >> cell) && read_ifs.ignore()) {
         int loc = count % 3;
         int idx = count / 3;
@@ -154,28 +159,34 @@ Graph::Graph(string data_path) {
         count++;
     }
     read_ifs.close();
-
+    
     unordered_set<uint32_t> all_ids;
     for (int i = 0; i < number_records; ++i) {
         all_ids.insert((*records)[i].source_id);
         all_ids.insert((*records)[i].target_id);
     }
+    
     int idx = 0;
     for (auto iter = all_ids.begin(); iter != all_ids.end(); ++iter) {
         if (word_book.find(*iter) == word_book.end())
             word_book[*iter] = idx++;
-    }
-
+    } // 1000us
+    
     for (auto iter = word_book.begin(); iter != word_book.end(); ++iter) {
         codebook[iter->second] = iter->first;
     }
     // codebook and wordbook
     this->V = codebook.size();
     adj = new list<int>[this->V]; 
+
+    
     for (Record &rec:*records) {
         // this->addEdge(word_book[rec.source_id], word_book[rec.target_id]);
         this->adj[word_book[rec.source_id]].push_back(word_book[rec.target_id]);
     }
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double, std::micro> elapsed = end - start; // std::micro 表示以微秒为时间单位
+    std::cout<< "joint time: "  << elapsed.count() << "us" << std::endl;
     cout << "Finished build the graph " << endl;
 }
   
@@ -288,29 +299,4 @@ void Graph::printSCCs() {
     cout << "larger than 2 counter：" << count << endl;
 }
 
-// // Driver program to test above functions 
-int main() 
-{ 
-    string data_path = "../data/test_data.txt";
-    Graph g(data_path);
-
-    g.get_SCCs(); 
-    // g.printSCCs();
-
-    
-    int number_scc = g.get_number_scc();
-    
-    for (int i = 0; i < number_scc; ++i) {
-        unordered_map<int,int> codebook;
-        vector<vector<int>> *ret = g.get_adjList(i, 2, 7,codebook);
-        if (ret != nullptr) {
-            vector<vector<int>> cycle;
-            get_simple_cycle(ret, cycle);
-        }
-    }
-    cout << "number of acc" << " " ;
-    cout << number_scc << endl;
-
-
-    return 0; 
-} 
+#endif

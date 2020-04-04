@@ -10,7 +10,8 @@
 // connected component!!
 // Do not try to use this code on a not storngly-connected component
 
-
+#ifndef SIMPLE_CYCLE
+#define SIMPLE_CYCLE
 
 #include <fstream>
 #include <iostream>
@@ -19,6 +20,8 @@
 #include <string.h>
 #include <algorithm>
 using namespace std;
+
+const int maxlen = 8;
 
 bool findCycles(int v, int s, vector<vector<int> >& adjList,  vector<bool>& blocked,  deque<int>& stackLike,  vector<vector<int> >&  B, vector<vector<int> >& cycles) ;
 
@@ -29,16 +32,11 @@ void readAdjData (string s, vector<vector<int> >* & aList );
 
 void displayVecOfVec (vector<vector<int> >&  cycles); 
 
-int get_simple_cycle(vector<vector<int>> *adjList, vector<vector<int>> &cycles) {
-    if (!adjList) return -1;
-    // verify data is read correctly by printing size of adjList for each node
-    cout << "Adj List:\n";
-    displayVecOfVec (*adjList);
+int compute_complex_cycle(vector<vector<int>> *adjList, vector<vector<int>> &cycles){
     // blocked 
     vector<bool> blocked (adjList->size(), false);
     // stack- but use a deque because better than stack
     deque<int>  stackLike;
-    
     // B_Fruitless is the book keeping needed to avoid fruitless searches.  It is
     // referred to as B in Johnson's original algorithm
     // initialize B
@@ -56,13 +54,55 @@ int get_simple_cycle(vector<vector<int>> *adjList, vector<vector<int>> &cycles) 
             blocked[j] = false;
             B_Fruitless[j].clear();
         }
-        // cout << "START: i=" << i << endl;
         findCycles(i, i, *adjList,  blocked, stackLike, B_Fruitless, cycles) ;
     }
+    return 0;
+}
 
-    cout << "Cycles:\n";
-    displayVecOfVec (cycles); 
+
+int compute_simple_cycle(vector<vector<int>> *adjList, vector<vector<int>> &cycles) {
+    int numnode = adjList->size();
+    for (int i = 0; i < numnode; ++i){
+        // cout << (*adjList)[i].size() << endl;
+        if ((*adjList)[i].size() > 1) return -1;
+    }
+    cycles.resize(1);
+    cycles[0].push_back(0);
+    for (int i = 1; i < numnode; ++i) {
+        cycles[0].push_back((*adjList)[cycles[0][i-1]][0]);  
+    }
+    return 0;
+}
+
+
+int get_simple_cycle(vector<vector<int>> *adjList, 
+                     vector<vector<int>> &cycles,
+                     unordered_map<int,int> &codebook) {
+    if (!adjList) return -1;
+    // verify data is read correctly by printing size of adjList for each node
+    // cout << "Adj List:\n";
+    // displayVecOfVec (*adjList);
     
+    if (adjList->size() < maxlen){
+        int ret = compute_simple_cycle(adjList, cycles);
+        if (ret == -1) {
+            compute_complex_cycle(adjList, cycles);
+        }
+    } // the scc is small enough, just judge it whether the single cycle
+    else {
+        compute_complex_cycle(adjList, cycles);   
+    }
+    int n = cycles.size();
+    for (int i = 0; i < n; ++i) {
+        int m = cycles[i].size();
+        for (int j = 0; j < m; ++j) {
+            cycles[i][j] = codebook[cycles[i][j]];
+        }
+    }
+    cout << "Cycles:\n";
+    displayVecOfVec(cycles); 
+    return 0;
+
 }
 
 
@@ -77,14 +117,14 @@ bool findCycles(int v, int s,
     stackLike.push_front(v);  // insert like a stack:  so at the front
     blocked[v] = true;
   
-//   cout << "BLOCKED list from visiting node" << v << ":::\t" ;
-//   for (int i =0; i<adjList.size() ;i++) {
-//     cout << blocked[i] << "\t";
-//   }
-//   cout << endl;
+    //   cout << "BLOCKED list from visiting node" << v << ":::\t" ;
+    //   for (int i =0; i<adjList.size() ;i++) {
+    //     cout << blocked[i] << "\t";
+    //   }
+    //   cout << endl;
 
 
-// explore all neighbours -- recursively 
+    // explore all neighbours -- recursively 
     for (int i = 0; i < adjList[v].size(); i++) {
         int w =  adjList[v][i];
                
@@ -120,20 +160,18 @@ bool findCycles(int v, int s,
 
         for (int i = 0; i < adjList[v].size(); i++) {
             int w = adjList[v][i];
-
-    // mark B_Fruitless[w] to point to v.  This says that going from v to w lead to an unfruitful search.
-    // later when w is found to particiate in a cycle, i'd better get rid of this false assupmtion about
-    // w not leading to fruitful cycles.
-
-        vector<int>::iterator it;
-        it = find(B_Fruitless[w].begin(), B_Fruitless[w].end(), v);
-        if (it == B_Fruitless[w].end()) {
-            // cout << "Pushing v=" << v << "on B_Fruitless list for w=" << w << "\n";
-            B_Fruitless[w].push_back(v);
-        }
+            // mark B_Fruitless[w] to point to v.  This says that going from v to w lead to an unfruitful search.
+            // later when w is found to particiate in a cycle, i'd better get rid of this false assupmtion about
+            // w not leading to fruitful cycles.
+            vector<int>::iterator it;
+            it = find(B_Fruitless[w].begin(), B_Fruitless[w].end(), v);
+            if (it == B_Fruitless[w].end()) {
+                // cout << "Pushing v=" << v << "on B_Fruitless list for w=" << w << "\n";
+                B_Fruitless[w].push_back(v);
+            }
         }
     }
-  // find v and remove it from stack
+     // find v and remove it from stack
     deque<int>::iterator it;
 
     it = find(stackLike.begin(), stackLike.end(), v);
@@ -146,21 +184,19 @@ bool findCycles(int v, int s,
 
 
 
-// Unblocks recursivly all blocked nodes, starting with a given node.
-
+    // Unblocks recursivly all blocked nodes, starting with a given node.
 void unblock(int  node, vector<bool> & blocked, vector<vector<int> > & B_Fruitless)
 {
-// state of B_Fruitless
-//   cout << "state of B_Fruitless\n";
-    // displayVecOfVec (B_Fruitless);
+    // state of B_Fruitless
+    //   cout << "state of B_Fruitless\n";
+        // displayVecOfVec (B_Fruitless);
 
-//   cout << "Unblocking " << node << endl; 
+    //   cout << "Unblocking " << node << endl; 
     blocked[node] = false;
     while (B_Fruitless[node].size() > 0) {
         int w = B_Fruitless[node][0];
         B_Fruitless[node].erase(find (B_Fruitless[node].begin(), B_Fruitless[node].end(), w) ) ;
         if (blocked[w]) {
-        //   cout << "RECURSIVE!!" << endl;
             unblock(w, blocked, B_Fruitless);
         }
     }
@@ -188,11 +224,11 @@ void readAdjData (string s, vector<vector<int> >*  & aList ) {
 
     pch = strtok (buff, " \t");
     while (pch != NULL) {
-//      cout << "pushd " << pch << "\t";
+    //      cout << "pushd " << pch << "\t";
       currentAdjList->push_back(atoi (pch));
       pch = strtok (NULL, " \t");
     }
-//    cout << "new line and size = " << currentAdjList->size() << "\n";
+    //    cout << "new line and size = " << currentAdjList->size() << "\n";
     aList->push_back(*currentAdjList);
   }
 }
@@ -218,12 +254,4 @@ void displayVecOfVec (vector<vector<int> > &A) {
   cout << "\n\n";
 }
 
-
-///////////////////////////////////////////////////////////////
-// int main() {
-//     // create an adjList poitner, and read in a file
-//     vector<vector<int> >* adjList;
-//     readAdjData ("./data.txt", adjList);
-//     get_simple_cycle(adjList);
-    
-// } // int main
+#endif
