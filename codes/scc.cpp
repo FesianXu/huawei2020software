@@ -8,8 +8,10 @@
 #include <unordered_map>
 #include <algorithm>
 #include <fstream>
+#include "./johnsons_circle.hpp"
 using namespace std; 
 
+extern int get_simple_cycle(vector<vector<int>> *adjList);
 
 // vector<vector<int>> scc; // store the strong-connected component
 class Record {
@@ -56,23 +58,58 @@ public:
     Graph getTranspose(); 
     void printSCCs();
 
-    const vector<vector<int>> *get_adjList(int rmin, int rmax, 
+    vector<vector<int>> *get_adjList(int index, int rmin, int rmax, 
                                            unordered_map<int,int> &codebook);
+    const int get_number_scc();
 }; 
 
-const vector<vector<int>> *Graph::get_adjList(int rmin, int rmax, 
+const int Graph::get_number_scc() {
+    return number_scc;
+}
+
+vector<vector<int>> *Graph::get_adjList(int index, int rmin, int rmax, 
                                               unordered_map<int,int> &codebook) {
     // rmin <= r <= rmax
-    vector<vector<int>> *adjlist = new vector<vector<int>>;
+    // codebook {idx, real_id}
+    vector<vector<int>> *adjlist = nullptr;
     int size = scc.size();
-    for (int i = 0; i < size; ++i) {
-        vector<int> curr = scc[i];
-        int num = curr.size();
-        if (num > rmax || num < rmin) continue;
-        for (int j = 0; j < num; ++j) {
+    if (index >= size) {
+        // cout << "index over size" << endl;
+        return adjlist;
+    }
+    vector<int> curr = scc[index];
+    int num = curr.size();
+    // cout << 
+    if (num < rmin) {
+        // cout << "r is not in the range of rmin and rmax" << endl; 
+        return adjlist;
+    }
 
+    adjlist = new vector<vector<int>>;
+    unordered_map<int,int> curmap;
+    for (int j = 0; j < num; ++j) 
+        curmap[curr[j]] = j;
+    // {real_id, idx}
+    
+    for (auto iter = curmap.begin(); iter != curmap.end(); ++iter)
+        codebook[iter->second] = iter->first;
+    // {idx, real_id}
+        
+    // for (auto iter = curr.begin(); iter != curr.end(); ++iter)
+    //     cout << *iter << endl;
+    
+    // for (auto iter = curmap.begin(); iter != curmap.end(); ++iter)
+    //     cout << iter->first << "  " << iter->second << endl;
+    
+    int nsize = codebook.size();
+    for (int i = 0; i < nsize; ++i) {
+        int sourceid = codebook[i];
+        list<int> curlist = adj[sourceid];
+        vector<int> curvec;
+        for (auto &v:curlist) {
+            curvec.push_back(curmap[v]);
         }
-
+        adjlist->push_back(curvec);
     }
     return adjlist;
 }
@@ -136,7 +173,8 @@ Graph::Graph(string data_path) {
     this->V = codebook.size();
     adj = new list<int>[this->V]; 
     for (Record &rec:*records) {
-        this->addEdge(word_book[rec.source_id], word_book[rec.target_id]);
+        // this->addEdge(word_book[rec.source_id], word_book[rec.target_id]);
+        this->adj[word_book[rec.source_id]].push_back(word_book[rec.target_id]);
     }
     cout << "Finished build the graph " << endl;
 }
@@ -147,7 +185,6 @@ void Graph::DFSUtil(int v, bool visited[], vector<int> &vecs)
     // Mark the current node as visited and print it 
     visited[v] = true; 
     vecs.push_back(v);
-    // cout << v << " ";
     // belonged to the same SCC
     // Recur for all the vertices adjacent to this vertex 
     list<int>::iterator i; 
@@ -221,7 +258,7 @@ void Graph::get_SCCs()
         // Pop a vertex from stack 
         int v = Stack.top(); 
         Stack.pop(); 
-  
+
         // Print Strongly connected component of the popped vertex 
         if (visited[v] == false) 
         {   
@@ -231,7 +268,7 @@ void Graph::get_SCCs()
             this->number_scc++;
         } 
     } 
-    cout << number_scc << endl;
+    // cout << number_scc << endl;
 } 
 
 void Graph::printSCCs() {
@@ -244,6 +281,7 @@ void Graph::printSCCs() {
         cout << "begin :" ;
         for (int j = 0; j < size; ++j)
             cout << curr[j] << " " ;
+        // cout << curr.size() << endl;
         cout << endl;
     }
     cout << "size of the scc = " << number_scc << endl;
@@ -253,21 +291,26 @@ void Graph::printSCCs() {
 // // Driver program to test above functions 
 int main() 
 { 
-    // Create a graph given in the above diagram 
-    // Graph g(6); 
-    // g.addEdge(0,3);
-    // g.addEdge(2,0);
-    // g.addEdge(0,1);
-    // g.addEdge(3,2);
-    // g.addEdge(3,1);
-    // g.addEdge(4,0);
-    // g.addEdge(5,3);
     string data_path = "../data/test_data.txt";
     Graph g(data_path);
-  
-    cout << "Following are strongly connected components in "
-            "given graph \n"; 
+
     g.get_SCCs(); 
-    g.printSCCs();
+    // g.printSCCs();
+
+    
+    int number_scc = g.get_number_scc();
+    
+    for (int i = 0; i < number_scc; ++i) {
+        unordered_map<int,int> codebook;
+        vector<vector<int>> *ret = g.get_adjList(i, 2, 7,codebook);
+        if (ret != nullptr) {
+            vector<vector<int>> cycle;
+            get_simple_cycle(ret, cycle);
+        }
+    }
+    cout << "number of acc" << " " ;
+    cout << number_scc << endl;
+
+
     return 0; 
 } 

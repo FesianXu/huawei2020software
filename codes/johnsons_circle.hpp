@@ -29,7 +29,7 @@ void readAdjData (string s, vector<vector<int> >* & aList );
 
 void displayVecOfVec (vector<vector<int> >&  cycles); 
 
-int get_simple_cycle(vector<vector<int>> *adjList) {
+int get_simple_cycle(vector<vector<int>> *adjList, vector<vector<int>> &cycles) {
     if (!adjList) return -1;
     // verify data is read correctly by printing size of adjList for each node
     cout << "Adj List:\n";
@@ -38,8 +38,7 @@ int get_simple_cycle(vector<vector<int>> *adjList) {
     vector<bool> blocked (adjList->size(), false);
     // stack- but use a deque because better than stack
     deque<int>  stackLike;
-    // cycles
-    vector<vector<int> > cycles;
+    
     // B_Fruitless is the book keeping needed to avoid fruitless searches.  It is
     // referred to as B in Johnson's original algorithm
     // initialize B
@@ -63,7 +62,7 @@ int get_simple_cycle(vector<vector<int>> *adjList) {
 
     cout << "Cycles:\n";
     displayVecOfVec (cycles); 
-
+    
 }
 
 
@@ -221,10 +220,10 @@ void displayVecOfVec (vector<vector<int> > &A) {
 
 
 ///////////////////////////////////////////////////////////////
-int main() {
-    // create an adjList poitner, and read in a file
-    vector<vector<int> >* adjList;
-    readAdjData ("./data.txt", adjList);
-    get_simple_cycle(adjList);
+// int main() {
+//     // create an adjList poitner, and read in a file
+//     vector<vector<int> >* adjList;
+//     readAdjData ("./data.txt", adjList);
+//     get_simple_cycle(adjList);
     
-} // int main
+// } // int main
