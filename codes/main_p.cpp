@@ -12,7 +12,13 @@
 #include "./scc.hpp"
 #include "./merge_cycles.hpp"
 #include <chrono>
+#include "./utils.hpp"
 using namespace std; 
+
+
+bool isShorter(const vector<int> &s1, const vector<int> &s2) {
+	return s1.size() < s2.size();
+}
 
 // // Driver program to test above functions 
 int main() 
@@ -42,27 +48,39 @@ int main()
     // for (int i = number_scc-1; i >= number_scc-1; --i) {
     for (int i = 0; i < number_scc; ++i) {
         unordered_map<int,int> codebook;
-        vector<vector<int>> *ret = g.get_adjList(i, 2, 7,codebook);
+        vector<vector<int>> *ret = g.get_adjList(i, 3, 7,codebook);
         if (ret != nullptr) {
             vector<vector<int>> cycles;
             get_simple_cycle(ret, cycles, codebook);
             vector<vector<int>> merged_cycles;
             get_merge_cycles(cycles, merged_cycles);
             for (auto &v:merged_cycles) {
-                cycles_list.emplace_back(v);
+                if (v.size() < 8)
+                    cycles_list.emplace_back(v);
             }
         }
     } // get simple cycles
+
+    // 字典序排列
     int cycles_number = cycles_list.size();
-    cout << cycles_list.size() << endl;
-    for (auto &v:cycles_list){
-        for (auto &vv:v)
-            cout << vv << " ";
-        cout << endl;
+    sort(cycles_list.begin(), cycles_list.end());
+    sort(cycles_list.begin(), cycles_list.end(), isShorter);
+    vector<int> cutpoint = {0};
+    for (int i = 1; i < cycles_number; ++i) {
+        if (cycles_list[i-1].size() != cycles_list[i].size())
+            cutpoint.push_back(i);
     }
-
-
-
+    for (int i = 0; i < cutpoint.size()-1; ++i)
+        sort(cycles_list.begin()+cutpoint[i], cycles_list.begin()+cutpoint[i+1]);
+    sort(cycles_list.begin()+cutpoint[cutpoint.size()-1], cycles_list.end());
+    // cout << cycles_list.size() << endl;
+    // for (auto &v:cycles_list){
+    //     for (auto &vv:v)
+    //         cout << vv << " ";
+    //     cout << endl;
+    // }
+    write_records("./records.txt", cycles_list);
+    
     cout << "number of scc" << " " ;
     cout << number_scc << endl;
     
