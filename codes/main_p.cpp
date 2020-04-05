@@ -27,6 +27,7 @@ int main()
     auto start_t = std::chrono::steady_clock::now();
     string data_path = "../data/test_data.txt";
     Graph g(data_path);
+    unordered_map<uint32_t, uint32_t> first_codebook = g.get_codebook();
 
     auto end = std::chrono::steady_clock::now();
     std::chrono::duration<double, std::micro> elapsed = end - start; // std::micro 表示以微秒为时间单位
@@ -35,7 +36,7 @@ int main()
     start = std::chrono::steady_clock::now();
     g.get_SCCs(); 
     // g.printSCCs();
-    
+
     end = std::chrono::steady_clock::now();
     elapsed = end - start; // std::micro 表示以微秒为时间单位
     std::cout<< "scc time: "  << elapsed.count() << "us" << std::endl;
@@ -51,7 +52,7 @@ int main()
         vector<vector<int>> *ret = g.get_adjList(i, 3, 7,codebook);
         if (ret != nullptr) {
             vector<vector<int>> cycles;
-            get_simple_cycle(ret, cycles, codebook);
+            get_simple_cycle(ret, cycles, codebook, first_codebook);
             vector<vector<int>> merged_cycles;
             get_merge_cycles(cycles, merged_cycles);
             for (auto &v:merged_cycles) {
@@ -82,7 +83,7 @@ int main()
     end = std::chrono::steady_clock::now();
     elapsed = end - start; // std::micro 表示以微秒为时间单位
     std::cout<< "cycle time: "  << elapsed.count() << "us" << std::endl;
-
+    
     auto end_t = std::chrono::steady_clock::now();
     elapsed = end_t - start_t; // std::micro 表示以微秒为时间单位
     std::cout<< "Total time: "  << elapsed.count() << "us" << std::endl;

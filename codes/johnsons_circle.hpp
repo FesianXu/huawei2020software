@@ -77,7 +77,8 @@ int compute_simple_cycle(vector<vector<int>> *adjList, vector<vector<int>> &cycl
 
 int get_simple_cycle(vector<vector<int>> *adjList, 
                      vector<vector<int>> &cycles,
-                     unordered_map<int,int> &codebook) {
+                     unordered_map<int,int> &codebook,
+                    unordered_map<uint32_t, uint32_t> &first_codebook) {
     if (!adjList) return -1;
     // verify data is read correctly by printing size of adjList for each node
     // cout << "Adj List:\n";
@@ -97,7 +98,7 @@ int get_simple_cycle(vector<vector<int>> *adjList,
     for (int i = 0; i < n; ++i) {
         int m = cycles[i].size();
         for (int j = 0; j < m; ++j) {
-            cycles[i][j] = codebook[cycles[i][j]];
+            cycles[i][j] = first_codebook[(uint32_t)codebook[cycles[i][j]]];
         }
     }
     // cout << "Cycles:\n";

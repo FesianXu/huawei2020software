@@ -65,10 +65,20 @@ public:
     vector<vector<int>> *get_adjList(int index, int rmin, int rmax, 
                                            unordered_map<int,int> &codebook);
     const int get_number_scc();
+    unordered_map<uint32_t, uint32_t> get_codebook();
+    const unordered_map<uint32_t,uint32_t> get_wordbook();
 }; 
 
 const int Graph::get_number_scc() {
     return number_scc;
+}
+
+const unordered_map<uint32_t,uint32_t> Graph::get_wordbook(){
+    return word_book;
+}
+
+unordered_map<uint32_t, uint32_t> Graph::get_codebook() {
+    return codebook;
 }
 
 vector<vector<int>> *Graph::get_adjList(int index, int rmin, int rmax, 
@@ -158,8 +168,12 @@ Graph::Graph(string data_path) {
         else if (loc == 2) (*records)[idx].account = cell;
         count++;
     }
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double, std::micro> elapsed = end - start; // std::micro 表示以微秒为时间单位
+    std::cout<< "joint time: "  << elapsed.count() << "us" << std::endl;
+    cout << "Finished build the graph " << endl;
+
     read_ifs.close();
-    
     unordered_set<uint32_t> all_ids;
     for (int i = 0; i < number_records; ++i) {
         all_ids.insert((*records)[i].source_id);
@@ -170,24 +184,20 @@ Graph::Graph(string data_path) {
     for (auto iter = all_ids.begin(); iter != all_ids.end(); ++iter) {
         if (word_book.find(*iter) == word_book.end())
             word_book[*iter] = idx++;
-    } // 1000us
+    } // 1000us {original_code, idx}
     
     for (auto iter = word_book.begin(); iter != word_book.end(); ++iter) {
         codebook[iter->second] = iter->first;
-    }
+    } // {idx,original_code}
     // codebook and wordbook
     this->V = codebook.size();
     adj = new list<int>[this->V]; 
 
-    
     for (Record &rec:*records) {
         // this->addEdge(word_book[rec.source_id], word_book[rec.target_id]);
         this->adj[word_book[rec.source_id]].push_back(word_book[rec.target_id]);
     }
-    auto end = std::chrono::steady_clock::now();
-    std::chrono::duration<double, std::micro> elapsed = end - start; // std::micro 表示以微秒为时间单位
-    std::cout<< "joint time: "  << elapsed.count() << "us" << std::endl;
-    cout << "Finished build the graph " << endl;
+    
 }
   
 // A recursive function to print DFS starting from v 
@@ -262,7 +272,7 @@ void Graph::get_SCCs()
     // Mark all the vertices as not visited (For second DFS) 
     for(int i = 0; i < V; i++) 
         visited[i] = false; 
-  
+    
     // Now process all vertices in order defined by Stack 
     while (Stack.empty() == false) 
     { 
@@ -277,8 +287,8 @@ void Graph::get_SCCs()
             gr.DFSUtil(v, visited, vecs);
             this->scc.push_back(vecs);
             this->number_scc++;
-        } 
-    } 
+        }
+    }
     // cout << number_scc << endl;
 } 
 
