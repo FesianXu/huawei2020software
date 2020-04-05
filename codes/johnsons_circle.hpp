@@ -92,6 +92,7 @@ int get_simple_cycle(vector<vector<int>> *adjList,
     else {
         compute_complex_cycle(adjList, cycles);   
     }
+    //TODO if the adjList too large, we need to seperate the SCC into 7-neighbor
     int n = cycles.size();
     for (int i = 0; i < n; ++i) {
         int m = cycles[i].size();
@@ -99,8 +100,8 @@ int get_simple_cycle(vector<vector<int>> *adjList,
             cycles[i][j] = codebook[cycles[i][j]];
         }
     }
-    cout << "Cycles:\n";
-    displayVecOfVec(cycles); 
+    // cout << "Cycles:\n";
+    // displayVecOfVec(cycles); 
     return 0;
 
 }
