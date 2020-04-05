@@ -35,7 +35,7 @@ int main()
     start = std::chrono::steady_clock::now();
     g.get_SCCs(); 
     // g.printSCCs();
-
+    
     end = std::chrono::steady_clock::now();
     elapsed = end - start; // std::micro 表示以微秒为时间单位
     std::cout<< "scc time: "  << elapsed.count() << "us" << std::endl;
@@ -73,14 +73,9 @@ int main()
     for (int i = 0; i < cutpoint.size()-1; ++i)
         sort(cycles_list.begin()+cutpoint[i], cycles_list.begin()+cutpoint[i+1]);
     sort(cycles_list.begin()+cutpoint[cutpoint.size()-1], cycles_list.end());
-    // cout << cycles_list.size() << endl;
-    // for (auto &v:cycles_list){
-    //     for (auto &vv:v)
-    //         cout << vv << " ";
-    //     cout << endl;
-    // }
+
     write_records("./records.txt", cycles_list);
-    
+
     cout << "number of scc" << " " ;
     cout << number_scc << endl;
     
